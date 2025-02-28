@@ -36,22 +36,34 @@ const props = defineProps({
     }
 })
 
-
-const myItems = ref<Array<{ name: string, editing: boolean }>>([])
+interface MyItem {
+    id: number;
+    name: string;
+    editing: boolean;
+}
+const myItems = ref<MyItem[]>([]);
 
 onMounted(async () => {
     try {
         // 调用 Rust 后端命令获取数据
-        const items: string[] = await invoke('get_my_items')
+        const items: { id: number, name: string }[] = await invoke('get_my_items')
         // 将数据转换为需要的格式
-        myItems.value = items.map(name => ({ name, editing: false }))
+        myItems.value = items.map(item => ({
+            id: item.id,
+            name: item.name,
+            editing: false
+        }))
     } catch (error) {
         console.error('Failed to fetch myItems:', error)
     }
 })
 
 const addNewItem = () => {
-    myItems.value.push({ name: '新建列表', editing: true })
+    myItems.value.push({
+        id: Date.now(), // 使用时间戳作为临时ID，或者从后端获取
+        name: '新建列表',
+        editing: true
+    })
 }
 
 const editItem = (index: number) => {
@@ -61,7 +73,12 @@ const editItem = (index: number) => {
 const saveEdit = async (index: number) => {
     myItems.value[index].editing = false
     try {
-        await invoke('update_my_items', { items: myItems.value.map(item => item.name) })
+        const task = {
+            id: myItems.value[index].id,
+            name: myItems.value[index].name
+        }
+        console.log(task);
+        await invoke('update_my_items', { task })
     } catch (error) {
         console.error('Failed to update items:', error)
         // 如果更新失败，可以在这里添加回滚逻辑或错误提示

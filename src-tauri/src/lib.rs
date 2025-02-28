@@ -1,8 +1,12 @@
+mod models;
 mod service;
 
+use models::*;
 use rusqlite::Connection;
 use service::*;
 use std::sync::Mutex;
+use tracing::{info, level_filters::LevelFilter};
+use tracing_subscriber::{fmt::Layer, layer::SubscriberExt, util::SubscriberInitExt, Layer as _};
 
 #[derive(Debug)]
 struct AppState {
@@ -11,6 +15,8 @@ struct AppState {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let layer = Layer::new().with_filter(LevelFilter::INFO);
+    tracing_subscriber::registry().with(layer).init();
     // 创建数据库连接
     let conn = Connection::open("my_database.db").expect("Failed to connect to database");
 
@@ -23,7 +29,7 @@ pub fn run() {
         .manage(AppState {
             db: Mutex::new(conn),
         })
-        .invoke_handler(tauri::generate_handler![get_my_items,update_my_items])
+        .invoke_handler(tauri::generate_handler![get_my_items, update_my_items])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -38,7 +44,8 @@ fn get_my_items(state: tauri::State<AppState>) -> Vec<String> {
 
 //添加更新任务列表
 #[tauri::command]
-fn update_my_items(items: Vec<String>, state: tauri::State<AppState>) {
-    let conn = state.db.lock().unwrap();
-    update_task(&conn,items);
+fn update_my_items(task: TaskList, state: tauri::State<AppState>) {
+    info!("前端传来的任务列表 {:?}", task);
+    let mut conn = state.db.lock().unwrap();
+    update_task(&mut conn, task).unwrap();
 }
