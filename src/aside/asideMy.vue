@@ -46,7 +46,7 @@ const myItems = ref<MyItem[]>([]);
 onMounted(async () => {
     try {
         // 调用 Rust 后端命令获取数据
-        const items: { id: number, name: string }[] = await invoke('get_my_items')
+        const items: { id: number, name: string }[] = await invoke('get_my_items');
         // 将数据转换为需要的格式
         myItems.value = items.map(item => ({
             id: item.id,

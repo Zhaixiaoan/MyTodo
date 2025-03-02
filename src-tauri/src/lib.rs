@@ -4,6 +4,7 @@ mod service;
 use models::*;
 use rusqlite::Connection;
 use service::*;
+use tauri::ipc::Response;
 use std::sync::Mutex;
 use tracing::{info, level_filters::LevelFilter};
 use tracing_subscriber::{fmt::Layer, layer::SubscriberExt, util::SubscriberInitExt, Layer as _};
@@ -36,10 +37,11 @@ pub fn run() {
 
 //获取任务列表
 #[tauri::command]
-fn get_my_items(state: tauri::State<AppState>) -> Vec<String> {
+fn get_my_items(state: tauri::State<AppState>) -> Response {
     // 这里可以从数据库或文件读取数据
     let conn = state.db.lock().unwrap();
-    get_task_list(&conn)
+    let task_list = get_task_list(&conn);
+    tauri::ipc::Response::new(serde_json::to_string(&task_list).unwrap())
 }
 
 //添加更新任务列表
