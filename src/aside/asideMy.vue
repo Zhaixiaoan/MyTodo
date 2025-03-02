@@ -1,12 +1,12 @@
 <template>
     <el-menu default-active="2" class="el-menu-vertical-demo-two" @open="handleOpen" @close="handleClose">
-        <el-menu-item v-for="(item, index) in myItems" :key="index" index="1">
+        <el-menu-item v-for="(item, index) in myItems" :key="index" index="1" @click="handleItemClick(item)">
             <el-icon>
                 <Expand />
             </el-icon>
             <template #title>
-                <el-input v-if="item.editing" v-model="item.name" @blur="saveEdit(index)" />
-                <span v-else @click="editItem(index)">{{ item.name }}</span>
+                <el-input v-if="item.editing" v-model="item.task_name" @blur="saveEdit(index)" />
+                <span v-else>{{ item.task_name }}</span>
             </template>
         </el-menu-item>
     </el-menu>
@@ -25,6 +25,16 @@ import { defineProps, ref, onMounted } from 'vue'
 import { Expand, Plus } from '@element-plus/icons-vue'
 import { invoke } from "@tauri-apps/api/core";
 
+
+const emit = defineEmits(['item-clicked'])
+const handleItemClick = (item: MyItem) => {
+    emit('item-clicked', {
+        id: item.id,
+        task_name: item.task_name
+    })
+}
+
+
 const props = defineProps({
     handleOpen: {
         type: Function,
@@ -38,7 +48,7 @@ const props = defineProps({
 
 interface MyItem {
     id: number;
-    name: string;
+    task_name: string;
     editing: boolean;
 }
 const myItems = ref<MyItem[]>([]);
@@ -46,11 +56,11 @@ const myItems = ref<MyItem[]>([]);
 onMounted(async () => {
     try {
         // 调用 Rust 后端命令获取数据
-        const items: { id: number, name: string }[] = await invoke('get_my_items');
+        const items: { id: number, task_name: string }[] = await invoke('get_my_items');
         // 将数据转换为需要的格式
         myItems.value = items.map(item => ({
             id: item.id,
-            name: item.name,
+            task_name: item.task_name,
             editing: false
         }))
     } catch (error) {
@@ -61,23 +71,20 @@ onMounted(async () => {
 const addNewItem = () => {
     myItems.value.push({
         id: Date.now(), // 使用时间戳作为临时ID，或者从后端获取
-        name: '新建列表',
+        task_name: '新建列表',
         editing: true
     })
 }
 
-const editItem = (index: number) => {
-    myItems.value[index].editing = true
-}
 
 const saveEdit = async (index: number) => {
     myItems.value[index].editing = false
     try {
         const task = {
             id: myItems.value[index].id,
-            name: myItems.value[index].name
+            task_name: myItems.value[index].task_name,
+            is_have: 0
         }
-        console.log(task);
         await invoke('update_my_items', { task })
     } catch (error) {
         console.error('Failed to update items:', error)

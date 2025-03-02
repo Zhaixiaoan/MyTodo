@@ -4,12 +4,12 @@
       <el-aside width="200px">
         <el-radio-group v-model="isCollapse" style="margin-bottom: 20px">
         </el-radio-group>
-        <AsidTop :handleOpen="handleOpen" :handleClose="handleClose" />
+        <AsidTop :handleOpen="handleOpen" :handleClose="handleClose" @item-clicked="handleItemClicked" />
         <el-divider border-style="dashed" />
-        <AsideMy :handleOpen="handleOpen" :handleClose="handleClose" />
+        <AsideMy :handleOpen="handleOpen" :handleClose="handleClose" @item-clicked="handleItemClicked" />
       </el-aside>
       <el-main class="custom-background">
-        <Middle :handleOpen="handleOpen" :handleClose="handleClose" />
+        <Middle :handleOpen="handleOpen" :handleClose="handleClose" :selected-item="selectedItem" />
       </el-main>
       <!-- <el-aside class="custom-aside-background" width="200px">Aside</el-aside> -->
     </el-container>
@@ -22,12 +22,20 @@ import AsidTop from './aside/asideTop.vue'
 import AsideMy from './aside/asideMy.vue'
 import Middle from './middle/middle.vue'
 
+
+interface ItemData {
+  id: number;
+  task_name: string;
+}
+const selectedItem = ref<ItemData>({ id: 0, task_name: '' })
+const handleItemClicked = (item: ItemData) => {
+  selectedItem.value = item
+}
+
 const isCollapse = ref(true)
 const handleOpen = (key: string, keyPath: string[]) => {
-  console.log(key, keyPath)
 }
 const handleClose = (key: string, keyPath: string[]) => {
-  console.log(key, keyPath)
 }
 </script>
 

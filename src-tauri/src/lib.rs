@@ -4,8 +4,8 @@ mod service;
 use models::*;
 use rusqlite::Connection;
 use service::*;
-use tauri::ipc::Response;
 use std::sync::Mutex;
+use tauri::ipc::Response;
 use tracing::{info, level_filters::LevelFilter};
 use tracing_subscriber::{fmt::Layer, layer::SubscriberExt, util::SubscriberInitExt, Layer as _};
 
@@ -30,7 +30,11 @@ pub fn run() {
         .manage(AppState {
             db: Mutex::new(conn),
         })
-        .invoke_handler(tauri::generate_handler![get_my_items, update_my_items])
+        .invoke_handler(tauri::generate_handler![
+            get_my_items,
+            update_my_items,
+            add_my_task
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -50,4 +54,11 @@ fn update_my_items(task: TaskList, state: tauri::State<AppState>) {
     info!("前端传来的任务列表 {:?}", task);
     let mut conn = state.db.lock().unwrap();
     update_task(&mut conn, task).unwrap();
+}
+
+#[tauri::command]
+fn add_my_task(task: String, task_list_id: u64) -> Result<(), String> {
+    println!("从前端接收到的输入内容: {}，id为{}", task, task_list_id);
+    // 这里可以添加处理逻辑，比如保存到数据库或进行其他操作
+    Ok(())
 }
